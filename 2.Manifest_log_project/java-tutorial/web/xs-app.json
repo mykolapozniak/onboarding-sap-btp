@@ -1,0 +1,12 @@
+{
+  "authenticationMethod": "route",
+  "routes": [
+    {
+      "source": "^/helloworld/(.*)$",
+      "target": "$1",
+      "destination": "helloworld",
+      "authenticationType": "xsuaa",
+      "csrfProtection": false
+    }
+  ]
+}

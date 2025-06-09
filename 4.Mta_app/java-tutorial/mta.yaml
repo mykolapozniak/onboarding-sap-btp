@@ -1,0 +1,64 @@
+_schema-version: "3.1"
+ID: helloworld-app
+version: 0.0.1
+
+description: "A Simple hello world app"
+modules:
+  - name: helloworld
+    type: java
+    path: "."
+    parameters:
+      memory: 2048M
+      buildpack: sap_java_buildpack_jakarta
+    properties:
+      TARGET_RUNTIME: tomcat
+      JBP_CONFIG_COMPONENTS: "jres: ['com.sap.xs.java.buildpack.jdk.SAPMachineJDK']"
+      JBP_CONFIG_SAP_MACHINE_JDK: "{ version: 21.+ }"
+    build-parameters:
+      builder: custom
+      build-result: "target/*.jar"
+      commands:
+        - mvn clean install
+    requires:
+      - name: javauaa
+      - name: app-logging-service
+  - name: web
+    type: nodejs
+    path: web
+    build-parameters:
+      builder: npm
+    requires:
+      - name: javauaa
+      - name: app-logging-service
+      - name: helloworld
+        group: destinations
+        properties:
+          name: helloworld
+          url: https://b416a258trial-dev-helloworld.cfapps.us10-001.hana.ondemand.com
+          forwardAuthToken: true
+resources:
+  - name: javauaa
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: xsuaa
+      service-plan: application
+      config:
+        xsappname: helloworld
+        tenant-mode: dedicated
+        scopes:
+          - name: "$XSAPPNAME.Display"
+            description: "Display content"
+        role-templates:
+          - name: "Viewer"
+            description: "View content"
+            scope-references:
+              - "$XSAPPNAME.Display"
+        oauth2-configuration:
+          redirect-uris:
+            - "https://*.cfapps.us10-001.hana.ondemand.com/**"
+
+  - name: app-logging-service
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: application-logs
+      service-plan: lite

@@ -1,0 +1,15 @@
+
+applications:
+  - name: secondapp
+    random-route: true
+    path: ./target/example-0.0.1-SNAPSHOT.jar
+    memory: 1024M
+    buildpacks:
+      - sap_java_buildpack_jakarta
+    env:
+      SPRING_PROFILES_ACTIVE: cloud
+      TARGET_RUNTIME: tomcat
+      JBP_CONFIG_COMPONENTS: "jres: ['com.sap.xs.java.buildpack.jdk.SAPMachineJDK']"
+      JBP_CONFIG_SAP_MACHINE_JDK : "{ version: 21.+ }"
+    services:
+      - app-logging-service
