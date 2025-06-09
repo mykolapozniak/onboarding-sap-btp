@@ -1,0 +1,12 @@
+{
+  "authenticationMethod": "route",
+  "routes": [
+    {
+      "source": "^/(.*)$",
+      "target": "$1",
+      "destination": "mta-bookshop-api",
+      "csrfProtection": false,
+      "authenticationType": "xsuaa"
+    }
+  ]
+}

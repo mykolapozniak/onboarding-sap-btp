@@ -1,0 +1,10 @@
+{
+  "xsappname": "mta-bookshop-uaa",
+  "appName": "mta-bookshop-approuter",
+  "displayName": "Bookshop multitenant app",
+  "appUrls": {
+    "onSubscription": "https://${org}-${space}-mta-bookshop-srv.cfapps.us10-001.hana.ondemand.com/callback/v1.0/tenants/{tenantId}",
+    "onSubscriptionAsync": false,
+    "onUnSubscriptionAsync": false
+  }
+}
