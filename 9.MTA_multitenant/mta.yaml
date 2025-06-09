@@ -1,0 +1,98 @@
+_schema-version: "3.1"
+ID: mta-bookshop
+version: 0.0.1
+description: Multi-tenant SAP BTP application with Spring Boot
+
+modules:
+ # --------------------- SERVER MODULE -----------------------
+  - name: mta-bookshop-srv
+# ------------------------------------------------------------
+    type: java
+    path: helloworld
+    parameters:
+      buildpack: sap_java_buildpack_jakarta
+      readiness-health-check-type: http
+      readiness-health-check-http-endpoint: /management/health
+    properties:
+      SPRING_PROFILES_ACTIVE: cloud
+      JBP_CONFIG_COMPONENTS: "jres: ['com.sap.xs.java.buildpack.jre.SAPMachineJRE']"
+      JBP_CONFIG_SAP_MACHINE_JRE: '{ use_offline_repository: false, version: 21.+ }'
+    requires:
+      - name: mta-bookshop-uaa
+      - name: mta-bookshop-service-manager-new
+      - name: mta-bookshop-registry
+    build-parameters:
+      builder: custom
+      commands:
+        - mvn clean package -DskipTests=true
+      build-result: "target/*.jar"
+    provides:
+      - name: mta-bookshop-api
+        properties:
+          mta-bookshop-url: ${default-url}
+# --------------------- APPROUTER MODULE ---------------------
+  - name: mta-bookshop-approuter-new
+# ------------------------------------------------------------
+    type: approuter.nodejs
+    path: web/router
+    parameters:
+      keep-existing-routes: true
+      disk-quota: 512M
+      memory: 512M
+    requires:
+      - name: mta-bookshop-api
+        group: destinations
+        properties:
+          name: mta-bookshop-api
+          url: ~{mta-bookshop-url}
+          forwardAuthToken: true
+      - name: mta-bookshop-uaa
+    provides:
+      - name: app-api
+        properties:
+          url: ${default-url}
+          application: ${app-name}
+    properties:
+      TENANT_HOST_PATTERN: '^(.*)-${app-name}.${default-domain}'
+# --------------------- RESOURCES ---------------------
+resources:
+# -----------------------------------------------------
+  - name: mta-bookshop-uaa
+    type: org.cloudfoundry.managed-service
+    requires:
+      - name: app-api
+    properties:
+      XSAPPNAME: ${xsuaa-app}
+    parameters:
+      service-plan: application
+      path: ./service-config/xs-security.json
+      service: xsuaa
+      shared: true
+      xsuaa-app: ${space}-~{app-api/application}
+      config:
+        xsappname: ${xsuaa-app}
+        oauth2-configuration:
+          redirect-uris:
+            - "http*://*.${default-domain}/**"
+  - name: mta-bookshop-service-manager-new
+    type: org.cloudfoundry.managed-service
+    parameters:
+      service: service-manager
+      service-plan: container
+  - name: mta-bookshop-registry
+    type: org.cloudfoundry.managed-service
+    requires:
+      - name: mta-bookshop-uaa
+      - name: mta-bookshop-srv
+      - name: mta-bookshop-api
+    parameters:
+      service: saas-registry
+      service-plan: application
+      config:
+        xsappname: ~{mta-bookshop-uaa/XSAPPNAME}
+        appName: mta-bookshop-approuter-new
+        displayName: Bookshop multitenant app
+        appUrls:
+          onSubscription: ~{mta-bookshop-api/mta-bookshop-url}/callback/v1.0/tenants/{tenantId}
+          onSubscriptionAsync: false
+          onUnSubscriptionAsync: false

@@ -1,0 +1,62 @@
+{
+  "tenant-mode": "shared",
+  "description": "Security configuration for the Bookstore application",
+  "scopes": [
+    {
+      "name": "$XSAPPNAME.Callback",
+      "description": "Callback scope",
+      "grant-as-authority-to-apps": [
+        "$XSAPPNAME(application,sap-provisioning,tenant-onboarding)"
+      ]
+    },
+    {
+      "name": "$XSAPPNAME.read",
+      "description": "Read data permission"
+    },
+    {
+      "name": "$XSAPPNAME.write",
+      "description": "Write data permission"
+    }
+  ],
+  "attributes": [],
+  "role-templates": [
+    {
+      "name": "Manager",
+      "description": "Admin access to application (full)",
+      "scope-references": [
+        "$XSAPPNAME.write",
+        "$XSAPPNAME.read"
+      ]
+    },
+    {
+      "name": "Viewer",
+      "description": "Read-only access to application",
+      "scope-references": [
+        "$XSAPPNAME.read"
+      ]
+    }
+  ],
+  "role-collections": [
+    {
+      "name": "Manager",
+      "description": "Manger role collection",
+      "role-template-references": [
+        "$XSAPPNAME.Manager"
+      ]
+    },
+    {
+      "name": "Viewer",
+      "description": "Viewer role collection",
+      "role-template-references": [
+        "$XSAPPNAME.Viewer"
+      ]
+    }
+  ],
+  "oauth2-configuration": {
+    "token-validity": 86400,
+    "refresh-token-validity": 2592000,
+    "redirect-uris": [
+      "https://*.cfapps.us10-001.hana.ondemand.com/**"
+    ]
+  }
+}
